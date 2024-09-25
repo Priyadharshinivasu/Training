@@ -1,0 +1,191 @@
+<?xml version="1.0"?>
+<project name="simpleant" default="info">
+
+	<property file="build.properties" />
+	<property name="src.dir" value="src" />
+	<property name="dist.dir" value="dist" />
+	<property name="web.dir" value="WebContent" />
+	<property name="lib.dir" value="${web.dir}/WEB-INF/lib" />
+
+	<property name="build.dir" value="${web.dir}/WEB-INF/classes" />
+	<property name="name" value="simpleant" />
+
+	<path id="master-classpath">
+		<fileset dir="${web.dir}/WEB-INF/lib">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${catalina.home}/lib">
+			<include name="*.jar" />
+		</fileset>
+		<pathelement path="${build.dir}" />
+	</path>
+
+	
+
+	<target name="build" description="Compile source tree java files">
+		<mkdir dir="${build.dir}" />
+		<javac destdir="${build.dir}" fork="yes" 
+				executable="${jdk.project.home}\\bin\\javac" encoding="iso-8859-1" debug="on" 
+				failonerror="true" deprecation="off" verbose="false" 
+				memoryInitialSize="256m" memoryMaximumSize="512m" includeantruntime="false">
+			<src path="${src.dir}" />
+
+			<classpath refid="master-classpath" />
+		</javac>
+
+		<copy todir="${build.dir}" flatten="false">
+			<fileset dir="${config.localdir}">
+				<include name="**/*.properties" />
+				<include name="**/log4j2.xml" />
+				<include name="**/applicationBeans.xml" />
+				<include name="**/datasource.xml" />
+				<exclude name="**/.dm/**" />
+				<exclude name="**/*.dm" />
+				<exclude name="**/*.dmdb" />
+			</fileset>
+		</copy>
+		<copy todir="${web.dir}/WEB-INF" flatten="false">
+			<fileset dir="${config.localdir}">
+				<include name="**/applicationContext.xml" />
+
+				<exclude name="**/.dm/**" />
+				<exclude name="**/*.dm" />
+				<exclude name="**/*.dmdb" />
+			</fileset>
+		</copy>
+
+		<copy todir="${build.dir}/template" flatten="false">
+			<fileset dir="${template.localdir}">
+				<include name="**/*.*" />
+				<exclude name="**/.dm/**" />
+				<exclude name="**/*.dm" />
+				<exclude name="**/*.dmdb" />
+			</fileset>
+		</copy>
+
+
+	</target>
+
+	<target name="clean" description="Clean output directories">
+		<delete>
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<include name="**/*.properties" />
+				<include name="**/*.html" />
+				<include name="**/*.xml" />
+				<include name="**/.dm/**" />
+				<include name="**/*.dm" />
+				<include name="**/*.dmdb" />
+			</fileset>
+
+		</delete>
+		<delete dir="${build.output.dir.was}" />
+	</target>
+
+
+	<target name="build-jar" depends="info,clean, build">
+		<mkdir dir="${dist.dir}" />
+
+		<jar destfile="${dist.dir}/${name}.jar">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<include name="**/*.html" />
+				<include name="**/*.jpg" />
+				<include name="**/*.JPG" />
+				<include name="**/jdbc.properties" />
+				<include name="**/application.properties" />
+				<exclude name="**/.dm/**" />
+				<exclude name="**/*.dm" />
+				<exclude name="**/Test.class" />
+				<exclude name="**/*.dmdb" />
+			</fileset>
+
+			<fileset dir="${config.localdir}">
+				<include name="**/applicationContext.xml" />
+				<include name="**/applicationBeans.xml" />
+				<include name="**/datasource.xml" />
+				<exclude name="**/.dm/**" />
+				<exclude name="**/*.dm" />
+				<exclude name="**/*.dmdb" />
+			</fileset>
+
+			<mappedresources>
+				<fileset dir="${build.dir}">
+					<include name="**/applog4j.xml" />
+				</fileset>
+				<globmapper from="applog4j2.xml" to="log4j2.xml" />
+			</mappedresources>
+
+		</jar>
+	</target>
+
+
+
+
+	<target name="build-war" depends="info,clean, build">
+		<war destfile="${webapps.dir}/${name}.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+			</fileset>
+
+		</war>
+
+	</target>
+
+	<target name="build-was-folder" depends="info,clean, build">
+
+		<copy todir="${build.output.dir.was}" includeEmptyDirs="false" verbose="false">
+			<fileset dir="${web.dir}">
+				<include name="**/*.*" />
+				<exclude name="**/.dm/**" />
+				<exclude name="**/*.dm" />
+			</fileset>
+
+		</copy>
+
+
+	</target>
+
+
+	<target name="info">
+		<echo>Apache Ant version is ${ant.version} - You are at ${sitename} </echo>
+		<echo>Basedir is ${basedir}</echo>
+	</target>
+
+	<fileset dir="${src.dir}" casesensitive="yes">
+		<include name="**/*.java" />
+		<exclude name="**/*Stub*" />
+	</fileset>
+
+	<target name="delete_dm">
+		<echo message="::: Delete dm files!" />
+
+		<delete>
+			<fileset dir="${src.dir}">
+				<include name="**/.dm/**" />
+				<include name="**/*.dm" />
+				<include name="**/*.dmdb" />
+			</fileset>
+
+		</delete>
+		<delete includeemptydirs="true">
+			<fileset dir="${src.dir}" includes="**/.dm/**" defaultexcludes="false" />
+		</delete>
+
+		<delete>
+			<fileset dir="${web.dir}">
+				<include name="**/.dm/**" />
+				<include name="**/*.dm" />
+				<include name="**/*.dmdb" />
+			</fileset>
+
+		</delete>
+		<delete includeemptydirs="true">
+			<fileset dir="${web.dir}" includes="**/.dm/**" defaultexcludes="false" />
+		</delete>
+
+	</target>
+
+	<target name="build-all" depends="info, build-jar, build-war" />
+
+</project>
